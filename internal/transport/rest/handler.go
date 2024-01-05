@@ -24,10 +24,5 @@ func (h *Handler) InitRoutes() *gin.Engine {
 		auth.POST("/login", h.login)
 	}
 
-	authorized := r.Group("/", authRequired())
-	{
-		authorized.GET("/profile", h.profileHandler)
-	}
-
 	return r
 }

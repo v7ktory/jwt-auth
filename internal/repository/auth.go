@@ -23,9 +23,9 @@ func (r *AuthRepository) Create(user model.User) error {
 	return err
 }
 
-func (r *AuthRepository) GetByCredentials(email, password string) (model.User, error) {
+func (r *AuthRepository) GetByCredentials(email string) (model.User, error) {
 	var user model.User
-	err := r.db.Where("email = ? AND password = ?", email, password).First(&user).Error
+	err := r.db.Where("email = ?", email).First(&user).Error
 	if gorm.ErrRecordNotFound == err {
 		return model.User{}, model.ErrUserNotFound
 	}

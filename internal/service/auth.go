@@ -37,18 +37,12 @@ func (s *AuthService) RegisterUser(ctx context.Context, user model.User) error {
 }
 
 func (s *AuthService) AuthenticateUser(ctx context.Context, email, password string) (string, error) {
-
-	hashedPassword, err := s.hasher.HashPassword(password)
+	user, err := s.repos.GetByCredentials(email)
 	if err != nil {
 		return "", err
 	}
 
-	user, err := s.repos.GetByCredentials(email, hashedPassword)
-	if err != nil {
-		return "", err
-	}
-
-	// Проверка совпадения хешированных паролей
+	// Check if the provided password matches the stored hashed password
 	if !s.hasher.CheckPasswordHash(password, user.Password) {
 		return "", errors.New("authentication failed: incorrect password")
 	}

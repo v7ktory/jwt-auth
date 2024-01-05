@@ -7,7 +7,7 @@ import (
 
 type Authorization interface {
 	Create(user model.User) error
-	GetByCredentials(email, password string) (model.User, error)
+	GetByCredentials(email string) (model.User, error)
 }
 
 type Repository struct {
