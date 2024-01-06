@@ -4,24 +4,24 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"time"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/v7ktory/fullstack/internal/model"
 	"github.com/v7ktory/fullstack/internal/repository"
 	"github.com/v7ktory/fullstack/pkg/hasher"
+	"github.com/v7ktory/fullstack/pkg/token"
 )
 
 type AuthService struct {
 	repos  repository.Authorization
 	hasher hasher.PasswordHasher
+	jwt    token.JWTService
 }
 
-func NewAuthService(repos repository.Authorization, hasher hasher.PasswordHasher) *AuthService {
+func NewAuthService(repos repository.Authorization, hasher hasher.PasswordHasher, jwt token.JWTService) *AuthService {
 	return &AuthService{
 		repos:  repos,
 		hasher: hasher,
+		jwt:    jwt,
 	}
 }
 
@@ -59,16 +59,10 @@ func (s *AuthService) SignIn(ctx context.Context, email, password string) (strin
 		return "", errors.New("authentication failed: incorrect password")
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": user.ID,
-		"exp": time.Now().Add(time.Hour * 24).Unix(),
-	})
-
-	secretKey := []byte(os.Getenv("JWT_SECRET_KEY"))
-	signedToken, err := token.SignedString(secretKey)
+	tokenString, err := s.jwt.GenerateJWT(email, user.Username)
 	if err != nil {
 		return "", fmt.Errorf("failed to sign JWT: %w", err)
 	}
 
-	return signedToken, nil
+	return tokenString, nil
 }

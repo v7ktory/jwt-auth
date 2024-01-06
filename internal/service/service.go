@@ -6,6 +6,7 @@ import (
 	"github.com/v7ktory/fullstack/internal/model"
 	"github.com/v7ktory/fullstack/internal/repository"
 	"github.com/v7ktory/fullstack/pkg/hasher"
+	"github.com/v7ktory/fullstack/pkg/token"
 )
 
 type Authorization interface {
@@ -17,8 +18,8 @@ type Service struct {
 	Authorization
 }
 
-func NewService(repos *repository.Repository, hasher hasher.PasswordHasher) *Service {
+func NewService(repos *repository.Repository, hasher hasher.PasswordHasher, jwt token.JWTService) *Service {
 	return &Service{
-		Authorization: NewAuthService(repos.Authorization, hasher),
+		Authorization: NewAuthService(repos.Authorization, hasher, jwt),
 	}
 }

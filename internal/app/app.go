@@ -13,6 +13,7 @@ import (
 	"github.com/v7ktory/fullstack/pkg/database/postgres"
 	"github.com/v7ktory/fullstack/pkg/hasher"
 	"github.com/v7ktory/fullstack/pkg/logger"
+	"github.com/v7ktory/fullstack/pkg/token"
 	"go.uber.org/zap"
 )
 
@@ -37,9 +38,10 @@ func Run() {
 		return
 	}
 	hash := hasher.NewHasher(os.Getenv("SALT"))
+	jwt := token.NewJWTService(os.Getenv("JWT_SECRET_KEY"))
 	repos := repository.NewRepository(db)
-	service := service.NewService(repos, hash)
-	handler := rest.NewHandler(service)
+	service := service.NewService(repos, hash, *jwt)
+	handler := rest.NewHandler(service, jwt)
 
 	if err := handler.InitRoutes().Run(os.Getenv("SERVER_ADDRESS")); !errors.Is(err, http.ErrServerClosed) {
 		logger.Fatal("Failed to run server", zap.Error(err))
