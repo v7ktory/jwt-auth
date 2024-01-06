@@ -25,23 +25,29 @@ func NewAuthService(repos repository.Authorization, hasher hasher.PasswordHasher
 	}
 }
 
-func (s *AuthService) SignUp(ctx context.Context, user model.User) error {
+func (s *AuthService) SignUp(ctx context.Context, user model.User) (string, error) {
 
 	hashedPassword, err := s.hasher.HashPassword(user.Password)
 	if err != nil {
-		return fmt.Errorf("failed to hash password: %w", err)
+		return "", fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	user.Password = string(hashedPassword)
 
 	err = s.repos.Create(user)
 	if errors.Is(err, model.ErrUserAlreadyExists) {
-		return model.ErrUserAlreadyExists
+		return "", model.ErrUserAlreadyExists
 	} else if err != nil {
-		return fmt.Errorf("failed to create user: %w", err)
+		return "", fmt.Errorf("failed to create user: %w", err)
 	}
 
-	return nil
+	// После успешной регистрации, генерируем токен
+	token, err := s.jwt.GenerateJWT(user.Email, user.Username)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate JWT: %w", err)
+	}
+
+	return token, nil
 }
 
 func (s *AuthService) SignIn(ctx context.Context, email, password string) (string, error) {

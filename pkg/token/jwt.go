@@ -11,6 +11,7 @@ import (
 type JWTClaim struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
+	UserID   string `json:"sub"`
 	jwt.StandardClaims
 }
 
@@ -42,6 +43,7 @@ func (js *JWTService) GenerateJWT(email, username string) (string, error) {
 }
 
 func (js *JWTService) ValidateToken(signedToken string) error {
+
 	token, err := jwt.ParseWithClaims(
 		signedToken,
 		&JWTClaim{},
@@ -50,14 +52,37 @@ func (js *JWTService) ValidateToken(signedToken string) error {
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("failed to validate token: %w", err)
+		return fmt.Errorf("failed to parse and validate token '%s': %v", signedToken, err)
 	}
+
 	claims, ok := token.Claims.(*JWTClaim)
 	if !ok {
-		return errors.New("couldn't parse claims")
+		return fmt.Errorf("couldn't parse claims from token '%s'", signedToken)
 	}
+
 	if claims.ExpiresAt < time.Now().Unix() {
-		return errors.New("token expired")
+		return fmt.Errorf("token '%s' expired", signedToken)
 	}
+
 	return nil
+}
+
+func (js *JWTService) ExtractUserIDFromToken(signedToken string) (string, error) {
+	token, err := jwt.ParseWithClaims(
+		signedToken,
+		&JWTClaim{},
+		func(token *jwt.Token) (interface{}, error) {
+			return js.jwtKey, nil
+		},
+	)
+	if err != nil {
+		return "", fmt.Errorf("failed to extract user ID: %w", err)
+	}
+
+	claims, ok := token.Claims.(*JWTClaim)
+	if !ok {
+		return "", errors.New("couldn't parse claims")
+	}
+
+	return claims.UserID, nil
 }

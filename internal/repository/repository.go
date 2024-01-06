@@ -10,8 +10,12 @@ type Authorization interface {
 	GetByCredentials(email string) (model.User, error)
 }
 
+type User interface {
+	GetUserByID(userID string) (*model.User, error)
+}
 type Repository struct {
 	Authorization
+	User
 }
 
 func NewRepository(db *gorm.DB) *Repository {

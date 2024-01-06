@@ -32,7 +32,7 @@ func (h *Handler) register(c *gin.Context) {
 		Password: regReq.Password,
 	}
 
-	err := h.services.SignUp(c, user)
+	token, err := h.services.SignUp(c, user)
 	if err != nil {
 		switch {
 		case errors.Is(err, model.ErrUserAlreadyExists):
@@ -45,7 +45,7 @@ func (h *Handler) register(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
+	c.JSON(http.StatusCreated, gin.H{"token": token, "message": "User registered successfully"})
 }
 
 func (h *Handler) login(c *gin.Context) {
@@ -72,5 +72,6 @@ func (h *Handler) login(c *gin.Context) {
 
 	c.SetCookie("token", token, int((time.Hour * 24).Seconds()), "/", "", false, true)
 
-	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
+	c.JSON(http.StatusOK, gin.H{"token": token, "message": "Login successful"})
+
 }
