@@ -9,9 +9,10 @@ import (
 )
 
 type Authorization interface {
-	RegisterUser(ctx context.Context, user model.User) error
-	AuthenticateUser(ctx context.Context, email, password string) (string, error)
+	SignUp(ctx context.Context, user model.User) error
+	SignIn(ctx context.Context, email, password string) (string, error)
 }
+
 type Service struct {
 	Authorization
 }

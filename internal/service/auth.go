@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"time"
 
@@ -24,25 +25,36 @@ func NewAuthService(repos repository.Authorization, hasher hasher.PasswordHasher
 	}
 }
 
-func (s *AuthService) RegisterUser(ctx context.Context, user model.User) error {
+func (s *AuthService) SignUp(ctx context.Context, user model.User) error {
 
 	hashedPassword, err := s.hasher.HashPassword(user.Password)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	user.Password = string(hashedPassword)
 
-	return s.repos.Create(user)
-}
-
-func (s *AuthService) AuthenticateUser(ctx context.Context, email, password string) (string, error) {
-	user, err := s.repos.GetByCredentials(email)
-	if err != nil {
-		return "", err
+	err = s.repos.Create(user)
+	if errors.Is(err, model.ErrUserAlreadyExists) {
+		return model.ErrUserAlreadyExists
+	} else if err != nil {
+		return fmt.Errorf("failed to create user: %w", err)
 	}
 
-	// Check if the provided password matches the stored hashed password
+	return nil
+}
+
+func (s *AuthService) SignIn(ctx context.Context, email, password string) (string, error) {
+
+	user, err := s.repos.GetByCredentials(email)
+	if err != nil {
+		return "", fmt.Errorf("authentication failed: %w", err)
+	}
+
+	if user == (model.User{}) {
+		return "", errors.New("authentication failed: user not found")
+	}
+
 	if !s.hasher.CheckPasswordHash(password, user.Password) {
 		return "", errors.New("authentication failed: incorrect password")
 	}
@@ -52,9 +64,10 @@ func (s *AuthService) AuthenticateUser(ctx context.Context, email, password stri
 		"exp": time.Now().Add(time.Hour * 24).Unix(),
 	})
 
-	signedToken, err := token.SignedString([]byte(os.Getenv("JWT_SECRET_KEY")))
+	secretKey := []byte(os.Getenv("JWT_SECRET_KEY"))
+	signedToken, err := token.SignedString(secretKey)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to sign JWT: %w", err)
 	}
 
 	return signedToken, nil
