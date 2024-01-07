@@ -1,8 +1,6 @@
 package service
 
 import (
-	"fmt"
-
 	"github.com/v7ktory/fullstack/internal/model"
 	"github.com/v7ktory/fullstack/internal/repository"
 )
@@ -18,11 +16,5 @@ func NewUserService(repos repository.User) *UserService {
 }
 
 func (s *UserService) GetUserByID(userID string) (*model.User, error) {
-
-	user, err := s.repos.GetUserByID(userID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user by ID: %w", err)
-	}
-
-	return user, nil
+	return s.repos.GetUserByID(userID)
 }

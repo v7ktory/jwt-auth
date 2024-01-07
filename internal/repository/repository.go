@@ -21,5 +21,6 @@ type Repository struct {
 func NewRepository(db *gorm.DB) *Repository {
 	return &Repository{
 		Authorization: NewAuthRepository(db),
+		User:          NewUserRepository(db),
 	}
 }

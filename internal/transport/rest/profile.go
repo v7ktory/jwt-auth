@@ -20,7 +20,6 @@ func (h *Handler) profile(c *gin.Context) {
 		return
 	}
 
-	// Извлекаем идентификатор пользователя из токена
 	userID, err := h.jwt.ExtractUserIDFromToken(tokenString)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to extract user ID from token"})

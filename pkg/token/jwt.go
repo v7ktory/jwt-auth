@@ -25,11 +25,12 @@ func NewJWTService(jwtKey string) *JWTService {
 	}
 }
 
-func (js *JWTService) GenerateJWT(email, username string) (string, error) {
+func (js *JWTService) GenerateJWT(email, username, userID string) (string, error) {
 	expirationTime := time.Now().Add(1 * time.Hour)
 	claims := &JWTClaim{
 		Email:    email,
 		Username: username,
+		UserID:   userID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
 		},
