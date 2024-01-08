@@ -7,7 +7,7 @@ import (
 
 type Authorization interface {
 	Create(user model.User) error
-	GetByCredentials(email string) (model.User, error)
+	Get(email string) (model.User, error)
 }
 
 type User interface {

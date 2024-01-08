@@ -27,7 +27,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 	auth.POST("/login", h.login)
 
 	secured := auth.Group("/secured").Use(h.Auth())
-	secured.GET("/profile/:id", h.profile)
+	secured.GET("/profile", h.profile)
 
 	return r
 }

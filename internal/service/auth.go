@@ -52,7 +52,7 @@ func (s *AuthService) SignUp(ctx context.Context, user model.User) (string, erro
 
 func (s *AuthService) SignIn(ctx context.Context, email, password string) (string, error) {
 
-	user, err := s.repos.GetByCredentials(email)
+	user, err := s.repos.Get(email)
 	if err != nil {
 		return "", fmt.Errorf("authentication failed: %w", err)
 	}

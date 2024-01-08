@@ -1,10 +1,13 @@
 package app
 
 import (
-	"errors"
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/v7ktory/fullstack/internal/repository"
@@ -23,28 +26,54 @@ func Run() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
+
 	logger := logger.NewLogger()
 
-	db, err := postgres.NewPostgresDB(postgres.Config{
+	dbConfig := postgres.Config{
 		Host:     os.Getenv("DB_HOST"),
 		Port:     os.Getenv("DB_PORT"),
 		Username: os.Getenv("DB_USER"),
 		Password: os.Getenv("DB_PASSWORD"),
 		DBName:   os.Getenv("DB_NAME"),
 		SSLMode:  os.Getenv("DB_SSLMODE"),
-	})
+	}
+
+	db, err := postgres.NewPostgresDB(dbConfig)
 	if err != nil {
 		logger.Error("Failed to connect to database", zap.Error(err))
 		return
 	}
+
 	hash := hasher.NewHasher(os.Getenv("SALT"))
 	jwt := token.NewJWTService(os.Getenv("JWT_SECRET_KEY"))
+
 	repos := repository.NewRepository(db)
 	service := service.NewService(repos, hash, *jwt)
+
 	handler := rest.NewHandler(service, jwt)
 
-	if err := handler.InitRoutes().Run(os.Getenv("SERVER_ADDRESS")); !errors.Is(err, http.ErrServerClosed) {
-		logger.Fatal("Failed to run server", zap.Error(err))
+	serverAddress := os.Getenv("SERVER_ADDRESS")
+	server := &http.Server{
+		Addr:    serverAddress,
+		Handler: handler.InitRoutes(),
 	}
 
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Fatal("Failed to run server", zap.Error(err))
+		}
+	}()
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	<-c
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		logger.Fatal("Server shutdown failed", zap.Error(err))
+	}
+
+	logger.Info("Server shutdown gracefully")
 }
