@@ -26,6 +26,7 @@ func NewJWTService(jwtKey string) *JWTService {
 }
 
 func (js *JWTService) GenerateJWT(email, username, userID string) (string, error) {
+
 	expirationTime := time.Now().Add(1 * time.Hour)
 	claims := &JWTClaim{
 		Email:    email,
@@ -36,11 +37,7 @@ func (js *JWTService) GenerateJWT(email, username, userID string) (string, error
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(js.jwtKey)
-	if err != nil {
-		return "", fmt.Errorf("failed to sign JWT: %w", err)
-	}
-	return tokenString, nil
+	return token.SignedString(js.jwtKey)
 }
 
 func (js *JWTService) ValidateToken(signedToken string) error {
@@ -61,7 +58,7 @@ func (js *JWTService) ValidateToken(signedToken string) error {
 		return fmt.Errorf("couldn't parse claims from token '%s'", signedToken)
 	}
 
-	if claims.ExpiresAt < time.Now().Unix() {
+	if time.Now().Unix() > claims.ExpiresAt {
 		return fmt.Errorf("token '%s' expired", signedToken)
 	}
 
@@ -69,6 +66,7 @@ func (js *JWTService) ValidateToken(signedToken string) error {
 }
 
 func (js *JWTService) ExtractUserIDFromToken(signedToken string) (string, error) {
+
 	token, err := jwt.ParseWithClaims(
 		signedToken,
 		&JWTClaim{},

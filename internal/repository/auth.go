@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -19,6 +20,7 @@ func NewAuthRepository(db *gorm.DB) *AuthRepository {
 }
 
 func (r *AuthRepository) Create(user model.User) error {
+
 	err := r.db.Create(&user).Error
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
@@ -33,7 +35,7 @@ func (r *AuthRepository) GetByCredentials(email string) (model.User, error) {
 
 	var user model.User
 	err := r.db.Where("email = ?", email).First(&user).Error
-	if gorm.ErrRecordNotFound == err {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return model.User{}, fmt.Errorf("user not found: %w", model.ErrUserNotFound)
 	} else if err != nil {
 		return user, fmt.Errorf("failed to get user by credentials: %w", err)

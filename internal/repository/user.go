@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -18,19 +19,20 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 	}
 }
 func (r *UserRepository) GetUserByID(userID string) (*model.User, error) {
+
 	var user model.User
 
-	// Преобразуем userID в число
 	numericUserID, err := strconv.Atoi(userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert user ID to numeric format: %w", err)
 	}
 
 	err = r.db.Where("id = ?", numericUserID).First(&user).Error
-	if gorm.ErrRecordNotFound == err {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, fmt.Errorf("user not found: %w", model.ErrUserNotFound)
 	} else if err != nil {
 		return nil, fmt.Errorf("failed to get user by ID: %w", err)
 	}
+
 	return &user, nil
 }

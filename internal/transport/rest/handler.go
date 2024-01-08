@@ -19,18 +19,15 @@ func NewHandler(services *service.Service, jwt *token.JWTService) *Handler {
 }
 
 func (h *Handler) InitRoutes() *gin.Engine {
+
 	r := gin.New()
 
 	auth := r.Group("/auth")
-	{
-		auth.POST("/register", h.register)
-		auth.POST("/login", h.login)
-	}
+	auth.POST("/register", h.register)
+	auth.POST("/login", h.login)
 
 	secured := auth.Group("/secured").Use(h.Auth())
-	{
-		secured.GET("/profile/:id", h.profile)
-	}
+	secured.GET("/profile/:id", h.profile)
 
 	return r
 }

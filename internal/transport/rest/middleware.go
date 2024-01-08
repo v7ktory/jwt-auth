@@ -7,14 +7,11 @@ func (h *Handler) Auth() gin.HandlerFunc {
 	return func(context *gin.Context) {
 		tokenString := context.GetHeader("Authorization")
 		if tokenString == "" {
-			context.JSON(401, gin.H{"error": "request does not contain an access token"})
-			context.Abort()
+			context.AbortWithStatusJSON(401, gin.H{"error": "request does not contain an access token"})
 			return
 		}
-		err := h.jwt.ValidateToken(tokenString)
-		if err != nil {
-			context.JSON(401, gin.H{"error": err.Error()})
-			context.Abort()
+		if err := h.jwt.ValidateToken(tokenString); err != nil {
+			context.AbortWithStatusJSON(401, gin.H{"error": err.Error()})
 			return
 		}
 		context.Next()
